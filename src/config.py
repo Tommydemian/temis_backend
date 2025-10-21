@@ -10,6 +10,12 @@ class Settings(BaseSettings):
 
     SECRET_KEY: str
 
+    TIENDANUBE_APP_ID: str
+    TIENDANUBE_CLIENT_SECRET: str
+    TIENDANUBE_REDIRECT_URI: str
+
+    FRONTEND_URL: str
+
     class Config:
         env_file = ".env"
 
