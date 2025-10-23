@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends
 
 from src.database import get_conn
-from src.services import check_production_availability, get_products_list
+from src.services.afip.services import check_production_availability, get_products_list
 
 router = APIRouter(prefix="/products", tags=["Products"])
 

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 
 from src.database import get_conn
 from src.models import ComponentResponse
-from src.services import get_components_list
+from src.services.afip.services import get_components_list
 
 router = APIRouter(prefix="/components", tags=["Components"])
 

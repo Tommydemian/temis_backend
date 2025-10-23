@@ -16,6 +16,8 @@ class Settings(BaseSettings):
 
     FRONTEND_URL: str
 
+    CUIT: str
+
     class Config:
         env_file = ".env"
 
