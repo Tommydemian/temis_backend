@@ -7,7 +7,7 @@ import asyncpg
 from fastapi import FastAPI, Request
 from loguru import logger
 
-from src.config import settings
+from src.core.config import settings
 
 BASE_DIR = Path(__file__).resolve().parent.parent  # Sube 2 niveles desde database.py
 LOGS_DIR = BASE_DIR / "logs"

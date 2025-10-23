@@ -1,7 +1,7 @@
 # src/routes/__init__.py
 from fastapi import APIRouter
 
-from src.routes import auth, components, integrations, orders, products
+from src.api.routes import auth, components, integrations, orders, products
 
 api_router = APIRouter()
 

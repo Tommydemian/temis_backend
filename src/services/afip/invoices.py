@@ -8,12 +8,8 @@ import asyncpg
 from fastapi import HTTPException
 
 from src.models import Factura, FacturaB, FacturaC, IVAItem
-from src.services.afip.afip_service import get_next_invoice_number
+from src.services.afip.client import get_next_invoice_number, request_cae
 
-# 80 = CUIT
-# 86 = CUIL
-# 96 = DNI
-# 99 = Consumidor Final
 TAX_ID_B_CODES = [80, 86, 96]
 
 
@@ -61,10 +57,24 @@ async def create_invoice_from_order(order_id: int, conn: asyncpg.Connection) -> 
     else:
         invoice_type = 11
 
-        # 1 = Productos
-        # 2 = Servicios
-        # 3 = Productos y Servicios
-    concept = 1
+    # Query para obtener concepts de productos
+    product_concepts = await conn.fetch(
+        """
+        SELECT DISTINCT p.concept
+        FROM order_product op
+        JOIN product p ON op.product_id = p.id
+        WHERE op.order_id = $1
+    """,
+        order_id,
+    )
+
+    concepts = {row["concept"] for row in product_concepts}
+
+    if len(concepts) == 1:
+        concept = concepts.pop()  # Todos iguales
+    else:
+        concept = 3  # Mix
+
     point_of_sale = 1
 
     invoice_number = get_next_invoice_number(
@@ -120,6 +130,67 @@ async def create_invoice_from_order(order_id: int, conn: asyncpg.Connection) -> 
             ImpNeto=total,
         )
 
-    # TODO: Call request_cae(data) and save to DB
-    return {}
-    pass
+    response = request_cae(data)  # Tu función AFIP
+    cae = response["CAE"]
+    cae_expiration = response["FchVto"]
+
+    # 2. Guardar invoice en DB con SNAPSHOT
+    await conn.execute(
+        """
+        INSERT INTO invoice (
+            order_id,
+            invoice_type,
+            point_of_sale,
+            invoice_number,
+            invoice_date,
+            cae,
+            cae_expiration,
+            total_amount,
+            net_amount,
+            iva_amount,
+            -- SNAPSHOT del customer (frozen data)
+            customer_name,
+            customer_tax_id_type,
+            customer_tax_id_number,
+            customer_tax_regime,
+            customer_address,
+            customer_phone,
+            customer_email,
+            status,
+            tenant_id
+        ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+            $11, $12, $13, $14, $15, $16, $17, $18, $19
+        )
+    """,
+        order_id,
+        "B" if invoice_type == 6 else "C",
+        point_of_sale,
+        invoice_number,
+        date.today(),
+        cae,
+        cae_expiration,
+        total,
+        neto,
+        iva_amount,
+        # Snapshot fields (from row)
+        row.get("customer_name"),  # ← frozen
+        row.get("tax_id_type"),  # ← frozen
+        row.get("tax_id_number"),  # ← frozen
+        row.get("tax_regime"),  # ← frozen
+        row.get("customer_address"),  # ← frozen
+        row.get("phone"),  # ← frozen (falta en tu query)
+        row.get("email"),  # ← frozen (falta en tu query)
+        "approved",
+        tenant_id,
+    )
+
+    return {
+        "success": True,
+        "invoice_id": invoice_id,
+        "invoice_type": "B" if invoice_type == 6 else "C",
+        "invoice_number": f"{point_of_sale:04d}-{invoice_number:08d}",
+        "cae": cae,
+        "total_amount": float(total),
+        "status": "approved",
+    }

@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from jose import JWTError, jwt
 
-from src.config import settings
+from src.core.config import settings
 
 ALGORITHM = "HS256"
 

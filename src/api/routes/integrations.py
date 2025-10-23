@@ -2,8 +2,8 @@ import httpx
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import RedirectResponse
 
-from src.config import settings
-from src.database import get_conn
+from src.core.config import settings
+from src.core.database import get_conn
 
 router = APIRouter(prefix="/integrations/tiendanube", tags=["Integrations"])
 

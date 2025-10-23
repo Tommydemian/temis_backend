@@ -2,7 +2,9 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    db_user: str
+    environment: str = "development"
+
+    db_user: str = "postgres"
     db_password: str
     db_database: str
     db_host: str = "127.0.0.1"
