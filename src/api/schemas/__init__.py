@@ -9,6 +9,7 @@ from src.api.schemas.auth import (
     UserCreate,
     UserResponse,
 )
+from src.api.schemas.customers import Customer, CustomerBase
 from src.api.schemas.invoices import (
     CustomerTaxRegime,
     Factura,
@@ -19,9 +20,9 @@ from src.api.schemas.invoices import (
 )
 from src.api.schemas.orders import (
     DeliveryStatus,
+    ManualOrderRequest,
     OrderBase,
     OrderCreate,
-    OrderRequest,
     OrderResponse,
     OrderResponseItem,
     OrderSource,
@@ -30,7 +31,12 @@ from src.api.schemas.orders import (
     PaymentStatus,
     ProductQty,
 )
-from src.api.schemas.products import ComponentAvailability, ComponentResponse
+from src.api.schemas.products import (
+    ComponentAvailability,
+    ComponentResponse,
+    Product,
+    ProductBase,
+)
 
 __all__ = [
     # Auth
@@ -47,13 +53,15 @@ __all__ = [
     "DeliveryStatus",
     "ProductQty",
     "OrderBase",
-    "OrderRequest",
+    "ManualOrderRequest",
     "OrderCreate",
     "OrderResponseItem",
     "OrderResponse",
     # Products
     "ComponentAvailability",
     "ComponentResponse",
+    "Product",
+    "ProductBase",
     # Invoices
     "CustomerTaxRegime",
     "IVAItem",
@@ -61,4 +69,7 @@ __all__ = [
     "FacturaC",
     "FacturaB",
     "yyyymmdd",
+    # Customers
+    "CustomerBase",
+    "Customer",
 ]

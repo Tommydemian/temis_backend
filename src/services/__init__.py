@@ -6,7 +6,7 @@ from src.services.auth import (
     verify_password,
 )
 from src.services.components import get_components_list
-from src.services.orders import create_new_order, get_order_by_id, get_orders_list
+from src.services.orders import create_new_order, fetch_order_detail, fetch_orders
 from src.services.products import check_production_availability, get_products_list
 
 __all__ = [
@@ -17,8 +17,8 @@ __all__ = [
     "register_user",
     "login_user",
     # Orders
-    "get_orders_list",
-    "get_order_by_id",
+    "fetch_orders",
+    "fetch_order_detail",
     "create_new_order",
     # Products
     "get_products_list",

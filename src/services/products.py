@@ -1,6 +1,6 @@
 import asyncpg
 
-from src.api.schemas import ComponentAvailability
+from src.api.schemas import ComponentAvailability, Product
 from src.core.exceptions import InvalidQuantityError, NotFoundError
 
 
@@ -36,3 +36,19 @@ async def check_production_availability(
         "detailed_data": row_list,
         "can_produce": all(row.can_produce for row in row_list),
     }
+
+
+async def search_products(
+    conn: asyncpg.Connection,
+    tenant_id: int,
+    query: str | None = None,
+) -> list[Product] | None:
+    print("end")
+    view = await conn.fetch(
+        'SELECT * FROM product WHERE ("name" ILIKE $1 OR sku ILIKE $1) AND tenant_id = $2 LIMIT 20',
+        f"%{query}%",
+        tenant_id,
+    )
+    if view:
+        products = [Product(**row) for row in view]
+        return products

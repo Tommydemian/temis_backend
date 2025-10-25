@@ -19,8 +19,8 @@ class PaymentMethod(Enum):
     CASH = "cash"
     CARD = "card"
     BANK_TRANSFER = "bank_transfer"
-    mercado_pago = "mercado_pago"
-    other = "other"
+    MERCADO_PAGO = "mercado_pago"
+    OTHER = "other"
 
 
 class PaymentStatus(Enum):
@@ -75,14 +75,14 @@ class OrderBase(BaseModel):
     delivery_notes: Optional[str] = None
 
 
-class OrderRequest(BaseModel):
-    customer_name: str
-    customer_phone: str
-    delivery_date: datetime | None = None
+class ManualOrderRequest(BaseModel):
+    customer_id: int | None = None
+    payment_method: PaymentMethod
+    notes: str | None = None
     items: list[ProductQty]
 
 
-class OrderCreate(OrderRequest):
+class OrderCreate(ManualOrderRequest):
     total_price: Decimal
     notes: str | None = None
 
