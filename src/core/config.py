@@ -2,12 +2,9 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    environment: str = "development"
+    ENVIRONMENT: str = "development"
 
     DATABASE_URL: str
-
-    RAILWAY_DATABASE_URL: str
-
     SECRET_KEY: str
 
     TIENDANUBE_APP_ID: str
