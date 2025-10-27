@@ -37,6 +37,7 @@ from src.api.schemas.products import (
     Product,
     ProductBase,
 )
+from src.api.schemas.sales import SaleResponse
 
 __all__ = [
     # Auth
@@ -72,4 +73,6 @@ __all__ = [
     # Customers
     "CustomerBase",
     "Customer",
+    # Sales
+    "SaleResponse",
 ]
