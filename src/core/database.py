@@ -13,6 +13,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent  # Sube 2 niveles desde databa
 LOGS_DIR = BASE_DIR / "logs"
 LOGS_DIR.mkdir(exist_ok=True)  # Crear carpeta si no existe
 
+DATABASE_URL = settings.DATABASE_URL
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,11 +40,7 @@ async def lifespan(app: FastAPI):
     logger.info("Starting application")
 
     app.state.conn_pool = await asyncpg.create_pool(
-        user=settings.db_user,
-        password=settings.db_password,
-        database=settings.db_database,
-        host=settings.db_host,
-        port=settings.db_port,
+        DATABASE_URL,
         min_size=2,
         max_size=10,
     )

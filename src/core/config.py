@@ -4,11 +4,9 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     environment: str = "development"
 
-    db_user: str = "postgres"
-    db_password: str
-    db_database: str
-    db_host: str = "127.0.0.1"
-    db_port: str = "5432"
+    DATABASE_URL: str
+
+    RAILWAY_DATABASE_URL: str
 
     SECRET_KEY: str
 

@@ -175,7 +175,6 @@ pyrightconfig.json
 
 # UV package manager
 .python-version
-uv.lock
 
 # End of https://www.toptal.com/developers/gitignore/api/pythondocker-compose.yml
 docker-compose.yaml
