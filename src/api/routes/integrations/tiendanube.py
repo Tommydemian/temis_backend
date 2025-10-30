@@ -1,4 +1,5 @@
 # src/api/routes/integrations/tiendanube.py
+import asyncpg
 import httpx
 from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse
@@ -6,6 +7,7 @@ from loguru import logger
 
 from src.core.config import settings
 from src.core.database import get_conn
+from src.core.exceptions import NotFoundError
 
 router = APIRouter(prefix="/tiendanube", tags=["TiendaNube"])
 
@@ -78,7 +80,7 @@ async def tiendanube_callback(code: str, conn=Depends(get_conn)):
             True,  # is_active
         )
 
-        logger.info(f"Integration saved for tenant {3}")
+        logger.info(f"Integration saved for tenant {4}")
 
         # Si llegaste acá, funcionó
         return RedirectResponse(
@@ -91,3 +93,38 @@ async def tiendanube_callback(code: str, conn=Depends(get_conn)):
         return RedirectResponse(
             url=f"{settings.FRONTEND_URL}/dashboard?integration_error=db_error"
         )
+
+
+async def get_store_credentials(conn: asyncpg.Connection, tenant_id: int = 3):
+    logger.bind(tenant_id=tenant_id).info("Fetching credentials")
+
+    row = await conn.fetchrow(
+        "SELECT store_id, access_token FROM tiendanube_integration WHERE tenant_id = $1",
+        tenant_id,
+    )
+
+    if row is None:
+        raise NotFoundError(identifier="Store id", resource=str(tenant_id))
+
+    return {"store_id": row["store_id"], "access_token": row["access_token"]}
+
+
+# api_url = f"https://api.tiendanube.com/v1/{store_id}"
+@router.get("/products")
+async def tiendanube_get_products(conn=Depends(get_conn)):
+    try:
+        credentials = await get_store_credentials(conn, tenant_id=3)
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"https://api.tiendanube.com/v1/{credentials['store_id']}/products",
+                headers={
+                    "Authentication": f"bearer {credentials['access_token']}",
+                    "User-Agent": "TALOS ERP (tomasgilamoedo@gmail.com)",
+                },
+            )
+
+        return response.json()
+
+    except Exception as e:
+        logger.error(f"DB error saving integration: {type(e).__name__}")

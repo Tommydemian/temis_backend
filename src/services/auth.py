@@ -62,7 +62,7 @@ async def register_user(
         """,
         user_data.email,
         password_hashed,
-        4,
+        5,
     )
 
     logger.debug(row)
