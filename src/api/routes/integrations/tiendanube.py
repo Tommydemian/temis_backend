@@ -70,7 +70,7 @@ async def tiendanube_callback(code: str, conn=Depends(get_conn)):
         is_active = TRUE,
         updated_at = NOW()
     """,
-            3,  # tenant_id
+            4,  # tenant_id
             access_token,
             store_id,
             user_id,
