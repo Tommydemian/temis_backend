@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 class User(BaseModel):
@@ -9,7 +9,7 @@ class User(BaseModel):
     password_hash: str
     created_at: datetime
     updated_at: datetime | None = None
-    tenant_id: str
+    tenant_id: int | None = Field(default=None)
 
 
 class UserCreate(BaseModel):
@@ -24,7 +24,9 @@ class LoginRequest(BaseModel):
 
 class TokenResponse(BaseModel):
     access_token: str
-    token_type: str
+    token_type: str = "bearer"
+    tenant_id: int
+    user_id: int
 
 
 class UserResponse(BaseModel):

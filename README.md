@@ -134,3 +134,13 @@ psql -U postgres -d your_database
 
 ### Foreign key violations
 Make sure you run migrations in order. Use `run_all_migrations.sql` to ensure correct sequence.
+
+
+
+
+Vamos a tener que implementar 4 endpoints en tu backend:
+
+/auth/tiendanube/callback (OAuth - recibe el code)
+/webhooks/store-redact (GDPR - borrar datos de tienda)
+/webhooks/customers-redact (GDPR - borrar datos de cliente)
+/webhooks/data-request (GDPR - exportar datos de cliente)

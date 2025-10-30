@@ -4,6 +4,7 @@ from typing import cast
 import asyncpg
 from fastapi import HTTPException
 from jose import jwt
+from loguru import logger
 from passlib.context import CryptContext
 
 from src.api.schemas import (
@@ -13,6 +14,7 @@ from src.api.schemas import (
     UserCreate,
 )
 from src.core.config import settings
+from src.core.exceptions import NotFoundError
 
 # ============================================================================
 # AUTH CONFIG
@@ -56,16 +58,26 @@ async def register_user(
         """
         INSERT INTO \"user\" (email, password_hash)
         VALUES ($1, $2)
-        RETURNING id, email, password_hash, created_at, updated_at
+        RETURNING id, email, password_hash, created_at, updated_at, tenant_id
         """,
         user_data.email,
         password_hashed,
     )
 
-    user = User(**cast(dict, row))
-    token = create_access_token(data={"sub": str(user.id), "tenant_id": user.tenant_id})
+    logger.debug(row)
 
-    return TokenResponse(access_token=token, token_type="bearer")
+    user = User(**cast(dict, row))
+    tenant_id = user.tenant_id
+    token = create_access_token(data={"sub": str(user.id), "tenant_id": tenant_id})
+
+    # cast(int, tenant_id)
+
+    if tenant_id is None:
+        raise NotFoundError(identifier="Tenant", resource=str(user.id))
+
+    return TokenResponse(
+        access_token=token, token_type="bearer", tenant_id=tenant_id, user_id=user.id
+    )
 
 
 async def login_user(
@@ -82,8 +94,16 @@ async def login_user(
 
     user = User(**dict(user_row))
 
+    tenant_id = user.tenant_id
+
     if not verify_password(credentials.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
 
     token = create_access_token(data={"sub": str(user.id), "tenant_id": user.tenant_id})
-    return TokenResponse(access_token=token, token_type="bearer")
+
+    if tenant_id is None:
+        raise NotFoundError(identifier="Tenant", resource=str(user.id))
+
+    return TokenResponse(
+        access_token=token, token_type="bearer", tenant_id=tenant_id, user_id=user.id
+    )

@@ -42,7 +42,7 @@ async def search_products(
     conn: asyncpg.Connection,
     tenant_id: int,
     query: str | None = None,
-) -> list[Product] | None:
+) -> list[Product]:
     view = await conn.fetch(
         'SELECT * FROM product WHERE ("name" ILIKE $1 OR sku ILIKE $1) AND tenant_id = $2 LIMIT 20',
         f"%{query}%",
@@ -51,3 +51,4 @@ async def search_products(
     if view:
         products = [Product(**row) for row in view]
         return products
+    return []
