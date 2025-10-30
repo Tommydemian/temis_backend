@@ -13,9 +13,8 @@ router = APIRouter(prefix="/tiendanube", tags=["TiendaNube"])
 @router.get("/auth-url")
 async def get_auth_url():
     auth_url = (
-        f"https://www.tiendanube.com/apps/authorize/token?"
-        f"client_id={settings.TIENDANUBE_APP_ID}"
-        f"&redirect_uri={settings.TIENDANUBE_REDIRECT_URI}"
+        f"https://www.tiendanube.com/apps/{settings.TIENDANUBE_APP_ID}/authorize?"
+        f"redirect_uri={settings.TIENDANUBE_REDIRECT_URI}"
         f"&response_type=code"
         f"&scope=read_orders,write_orders,read_products,write_products"
     )
