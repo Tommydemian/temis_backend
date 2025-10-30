@@ -56,7 +56,7 @@ async def register_user(
 
     row = await conn.fetchrow(
         """
-        INSERT INTO \"user\" (email, password_hash)
+        INSERT INTO \"user\" (email, password_hash, tenant_id)
         VALUES ($1, $2, $3)
         RETURNING id, email, password_hash, created_at, updated_at, tenant_id
         """,
