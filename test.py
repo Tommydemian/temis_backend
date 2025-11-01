@@ -1,49 +1,30 @@
-# import time
+import asyncpg
+from loguru import logger
 
-# from loguru import logger
+from src.core.config import settings
 
 
-# async def process_payment(order_id: int, amount: float, payment_method: str):
-#     log = logger.bind(order_id=order_id)
+async def test_errors():
+    conn = await asyncpg.connect(settings.DATABASE_URL)
 
-#     logger.info(
-#         "Starting payment process...",
-#         order_id=order_id,
-#         amount=amount,
-#         payment_method=payment_method,
-#     )
-#     # Validar monto
-#     if amount <= 0:
-#         logger.warning("Invalid payment amount", amount=amount, reason="must be > 0")
-#         # ¿Qué log pondrías acá?
-#         raise InvalidAmountError(amount)
+    try:
+        await conn.execute("""
+            INSERT INTO tiendanube_product_variant (
+                tenant_id, tiendanube_variant_id, product_id, values,
+                price, sku, stock, tn_created_at, tn_updated_at,
+                last_synced_at, sync_status
+            ) VALUES (
+                2, 99999999, 99999999, '{}',
+                1000.0, 'SKU-TEST', 10, NOW(), NOW(),
+                NOW(), 'synced'
+            )
+        """)
+    except asyncpg.ForeignKeyViolationError as e:
+        logger.error(f"ForeignKeyViolationError: {e}")
 
-#     # Conectar a Mercado Pago API
-#     # ¿Qué log pondrías acá?
-#     logger.info(
-#         "Calling Mercado Pago API",
-#         amount=amount,
-#         payment_method=payment_method,
-#     )
+    await conn.close()
 
-#     start = time.perf_counter()
 
-#     response = await mercadopago_client.charge(amount, payment_method)
+import asyncio
 
-#     elapsed_ms = (time.perf_counter() - start) * 1000
-
-#     if response.status == "approved":
-#         # ¿Qué log pondrías acá?
-#         logger.info(
-#             "Payment approved",
-#             status=response.status,
-#             transaction_id=response.id,
-#             duration_ms=round(elapsed_ms, 2),
-#         )
-#         return {"status": "success", "transaction_id": response.id}
-#     else:
-#         logger.opt(exception=True).error(
-#             "Payment failed - unexpected error",
-#             error_type=e.__class__.__name__,
-#         )  # ¿Qué log pondrías acá?
-#         raise PaymentFailedError(response.error
+asyncio.run(test_errors())

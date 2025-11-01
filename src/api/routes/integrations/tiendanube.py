@@ -1,13 +1,14 @@
 # src/api/routes/integrations/tiendanube.py
-import asyncpg
 import httpx
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from loguru import logger
 
+from src.api.routes.integrations.tiendanube_deps import get_store_credentials
+from src.api.schemas import TiendaNubeProductDB
 from src.core.config import settings
 from src.core.database import get_conn
-from src.core.exceptions import NotFoundError
+from src.services.tiendanube import sync_products_from_tiendanube
 
 router = APIRouter(prefix="/tiendanube", tags=["TiendaNube"])
 
@@ -95,36 +96,80 @@ async def tiendanube_callback(code: str, conn=Depends(get_conn)):
         )
 
 
-async def get_store_credentials(conn: asyncpg.Connection, tenant_id: int = 3):
-    logger.bind(tenant_id=tenant_id).info("Fetching credentials")
-
-    row = await conn.fetchrow(
-        "SELECT store_id, access_token FROM tiendanube_integration WHERE tenant_id = $1",
-        tenant_id,
+@router.post("/products/sync")
+async def sync_products(
+    conn=Depends(get_conn), credentials=Depends(get_store_credentials)
+):
+    result = await sync_products_from_tiendanube(
+        store_id=credentials["store_id"],
+        access_token=credentials["access_token"],
+        conn=conn,
     )
 
-    if row is None:
-        raise NotFoundError(identifier="Store id", resource=str(tenant_id))
-
-    return {"store_id": row["store_id"], "access_token": row["access_token"]}
+    return result
 
 
-# api_url = f"https://api.tiendanube.com/v1/{store_id}"
 @router.get("/products")
-async def tiendanube_get_products(conn=Depends(get_conn)):
-    try:
-        credentials = await get_store_credentials(conn, tenant_id=3)
+async def get_products(
+    conn=Depends(get_conn),
+    page: int = 1,
+    limit=50,
+    tenant_id: int = 2,
+    published: bool | None = None,
+):
+    offset = (page - 1) * limit
 
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"https://api.tiendanube.com/v1/{credentials['store_id']}/products",
-                headers={
-                    "Authentication": f"bearer {credentials['access_token']}",
-                    "User-Agent": "TALOS ERP (tomasgilamoedo@gmail.com)",
-                },
+    query = "SELECT * FROM tiendanube_product WHERE tenant_id = $1"
+    params = [tenant_id]
+
+    count_query = "SELECT COUNT(*) FROM tiendanube_product WHERE tenant_id = $1"
+    count_params = [tenant_id]
+
+    if published is not None:
+        query += " AND published = $2"
+        params.append(published)
+        query += " LIMIT $3 OFFSET $4"
+        params.extend([limit, offset])
+        count_query += " AND published = $2"
+        count_params.append(published)
+    else:
+        query += " LIMIT $2 OFFSET $3"
+        params.extend([limit, offset])
+
+    rows = await conn.fetch(query, *params)
+    total = await conn.fetchval(count_query, *count_params)
+    products = [TiendaNubeProductDB(**row) for row in rows]
+
+    return {"total": total, "page": page, "per_page": limit, "data": products}
+
+
+@router.get("/categories")
+async def tiendanube_get_categories(conn=Depends(get_conn)):
+    credentials = await get_store_credentials(conn, tenant_id=2)
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"https://api.tiendanube.com/v1/{credentials['store_id']}/products",
+            headers={
+                "Authentication": f"bearer {credentials['access_token']}",
+                "User-Agent": "TALOS ERP (tomasgilamoedo@gmail.com)",
+            },
+        )
+
+        logger.info(f"Response headers: {response.headers}")
+        logger.info(f"Total products: {response.headers.get('X-Total-Count')}")
+        logger.info(f"Link header: {response.headers.get('Link')}")
+
+        if response.status_code != 200:
+            logger.error(f"TiendaNube API error: {response.status_code}")
+            raise HTTPException(
+                status_code=502, detail="Failed to fetch products from TiendaNube"
             )
 
         return response.json()
 
-    except Exception as e:
-        logger.error(f"DB error saving integration: {type(e).__name__}")
+        # products = [TiendaNubeProduct(**el) for el in raw_products]
+
+        # logger.info(len(products))
+
+        # return raw_products

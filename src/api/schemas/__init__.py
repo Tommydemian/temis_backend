@@ -38,6 +38,12 @@ from src.api.schemas.products import (
     ProductBase,
 )
 from src.api.schemas.sales import SaleResponse
+from src.api.schemas.tiendanube import (
+    TiendaNubeProduct,
+    TiendaNubeProductDB,
+    TiendaNubeVariantDB,
+    Variant,
+)
 
 __all__ = [
     # Auth
@@ -75,4 +81,9 @@ __all__ = [
     "Customer",
     # Sales
     "SaleResponse",
+    # TiendaNube
+    "TiendaNubeProduct",
+    "TiendaNubeProductDB",
+    "TiendaNubeVariantDB",
+    "Variant",
 ]

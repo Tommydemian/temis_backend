@@ -1,0 +1,1 @@
+from src.repositories.tiendanube_repo import save_products_batch, save_variant_batch

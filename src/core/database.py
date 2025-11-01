@@ -54,7 +54,7 @@ async def lifespan(app: FastAPI):
     logger.info("Database pool closed")
 
 
-async def get_conn(request: Request):  # ✅ Cambiar FastAPI por Request
-    """Dependency para obtener conexión del pool"""
+async def get_conn(request: Request):
+    """Dependency to obtain conn from pool"""
     async with request.app.state.conn_pool.acquire() as conn:
         yield conn
